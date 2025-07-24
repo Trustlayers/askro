@@ -1,0 +1,205 @@
+name: Header Compliance Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  header-compliance:
+    runs-on: ubuntu-latest
+    name: Check Header Compliance
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: dom, json
+        tools: composer
+        
+    - name: Validate composer.json and composer.lock
+      run: composer validate --strict
+      continue-on-error: true
+      
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
+          
+    - name: Install dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest
+      continue-on-error: true
+      
+    - name: Run header compliance check
+      id: header-check
+      run: |
+        echo "🔍 Running header compliance validation..."
+        php tools/check-headers.php --verbose --report junit --output header-compliance-report.xml
+        
+    - name: Upload header compliance report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: header-compliance-report
+        path: header-compliance-report.xml
+        retention-days: 30
+        
+    - name: Publish header compliance results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Header Compliance Tests
+        path: header-compliance-report.xml
+        reporter: java-junit
+        fail-on-error: true
+        
+    - name: Comment on PR with compliance status
+      if: github.event_name == 'pull_request' && failure()
+      uses: actions/github-script@v6
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## ❌ Header Compliance Check Failed
+            
+            The header compliance validation failed for this pull request. Please review the following:
+            
+            ### Common Issues:
+            - Missing or incomplete file headers
+            - Incorrect @package declarations
+            - Missing license information
+            - Missing security checks (ABSPATH for PHP files)
+            
+            ### How to Fix:
+            1. Run locally: \`php tools/check-headers.php --verbose\`
+            2. Fix the reported issues
+            3. Re-run the validation to confirm fixes
+            4. Commit and push your changes
+            
+            ### Need Help?
+            Check the [CONTRIBUTING.md](CONTRIBUTING.md) for header format guidelines.
+            
+            📄 [View detailed compliance report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`
+          })
+          
+    - name: Set workflow status
+      if: failure()
+      run: |
+        echo "❌ Header compliance check failed!"
+        echo "Please fix the header compliance issues and try again."
+        exit 1
+
+  header-coverage:
+    runs-on: ubuntu-latest
+    name: Generate Header Coverage Matrix
+    needs: header-compliance
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        extensions: dom, json
+        
+    - name: Generate compliance matrix
+      run: |
+        echo "📊 Generating header compliance matrix..."
+        php tools/check-headers.php --report json --output compliance-matrix.json
+        
+    - name: Parse compliance data
+      id: compliance
+      run: |
+        if [ -f compliance-matrix.json ]; then
+          TOTAL=$(jq '.total_files' compliance-matrix.json)
+          COMPLIANT=$(jq '.compliant_files' compliance-matrix.json)
+          RATE=$(echo "scale=1; $COMPLIANT * 100 / $TOTAL" | bc)
+          echo "total=$TOTAL" >> $GITHUB_OUTPUT
+          echo "compliant=$COMPLIANT" >> $GITHUB_OUTPUT
+          echo "rate=$RATE" >> $GITHUB_OUTPUT
+        else
+          echo "total=0" >> $GITHUB_OUTPUT
+          echo "compliant=0" >> $GITHUB_OUTPUT
+          echo "rate=0" >> $GITHUB_OUTPUT
+        fi
+        
+    - name: Create compliance badge
+      uses: schneegans/dynamic-badges-action@v1.6.0
+      with:
+        auth: ${{ secrets.GITHUB_TOKEN }}
+        gistID: ${{ secrets.COMPLIANCE_BADGE_GIST_ID }}
+        filename: askro-header-compliance.json
+        label: Header Compliance
+        message: ${{ steps.compliance.outputs.rate }}%
+        color: ${{ steps.compliance.outputs.rate >= 90 && 'brightgreen' || steps.compliance.outputs.rate >= 70 && 'yellow' || 'red' }}
+      continue-on-error: true
+      
+    - name: Upload compliance matrix
+      uses: actions/upload-artifact@v3
+      with:
+        name: compliance-matrix
+        path: compliance-matrix.json
+        retention-days: 7
+
+  security-check:
+    runs-on: ubuntu-latest
+    name: Security Header Validation
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        
+    - name: Check for security patterns
+      run: |
+        echo "🔒 Validating security patterns in headers..."
+        
+        # Check for ABSPATH security checks
+        MISSING_ABSPATH=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -L "ABSPATH" {} \; | wc -l)
+        
+        if [ $MISSING_ABSPATH -gt 0 ]; then
+          echo "⚠️  Found $MISSING_ABSPATH PHP files without ABSPATH security checks"
+          find . -name "*.php" -not -path "./vendor/*" -exec grep -L "ABSPATH" {} \;
+        else
+          echo "✅ All PHP files have proper ABSPATH security checks"
+        fi
+        
+        # Check for license compliance
+        MISSING_LICENSE=$(find . -name "*.php" -not -path "./vendor/*" -exec grep -L "GNU General Public License" {} \; | wc -l)
+        
+        if [ $MISSING_LICENSE -gt 0 ]; then
+          echo "⚠️  Found $MISSING_LICENSE PHP files without GPL license headers"
+          find . -name "*.php" -not -path "./vendor/*" -exec grep -L "GNU General Public License" {} \;
+        else
+          echo "✅ All PHP files have proper GPL license headers"
+        fi
+        
+        # Summary
+        echo "📋 Security Header Summary:"
+        echo "   - Files missing ABSPATH checks: $MISSING_ABSPATH"
+        echo "   - Files missing license headers: $MISSING_LICENSE"
+        
+        if [ $MISSING_ABSPATH -gt 0 ] || [ $MISSING_LICENSE -gt 0 ]; then
+          echo "❌ Security validation failed!"
+          exit 1
+        else
+          echo "✅ Security validation passed!"
+        fi

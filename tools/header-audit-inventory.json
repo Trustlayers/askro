@@ -1,0 +1,77 @@
+{
+    "audit_metadata": {
+        "timestamp": "2025-07-24 08:32:09",
+        "plugin_name": "Askro",
+        "base_directory": "C:\\Users\\willi\\Local Sites\\plugin\\app\\public\\wp-content\\plugins\\Askro",
+        "total_files": 3,
+        "tool_version": "1.0.0"
+    },
+    "summary": {
+        "total_files": 3,
+        "php_files": 3,
+        "css_files": 0,
+        "files_with_headers": 3,
+        "compliant_files": 1,
+        "non_compliant_files": 2,
+        "compliance_rate": 33.33
+    },
+    "files": [
+        {
+            "file_path": "askro.php",
+            "file_type": "php",
+            "header_present": true,
+            "header_compliant": true,
+            "issues": [],
+            "file_size": 7634,
+            "last_modified": "2025-07-23 23:50:46",
+            "header_details": {
+                "plugin_header": true,
+                "package": "Askro",
+                "author": "Your Name",
+                "since": "1.0.0",
+                "plugin_name": "Askro",
+                "version": "1.0.0",
+                "description": "A comprehensive WordPress plugin for managing Q&A functionality with advanced features for community engagement and knowledge sharing.",
+                "license": "GPL v2 or later"
+            }
+        },
+        {
+            "file_path": "tools/header-audit.php",
+            "file_type": "php",
+            "header_present": true,
+            "header_compliant": false,
+            "issues": [
+                "Missing plugin_name declaration",
+                "Missing version declaration",
+                "Missing description declaration",
+                "Missing license declaration",
+                "Only 3/7 required elements found"
+            ],
+            "file_size": 16597,
+            "last_modified": "2025-07-24 08:32:04",
+            "header_details": {
+                "plugin_header": true,
+                "package": "Askro\\Tools",
+                "author": "Header Audit Tool",
+                "since": "1.0.0"
+            }
+        },
+        {
+            "file_path": "uninstall.php",
+            "file_type": "php",
+            "header_present": true,
+            "header_compliant": false,
+            "issues": [
+                "Missing author declaration",
+                "Only 2/3 required elements found",
+                "Missing ABSPATH security check"
+            ],
+            "file_size": 2193,
+            "last_modified": "2025-07-23 23:51:14",
+            "header_details": {
+                "package": "YourPlugin",
+                "since": "1.0.0"
+            }
+        }
+    ]
+}
