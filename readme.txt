@@ -1,12 +1,13 @@
 === Askro ===
-Contributors: your-username
+Contributors: Arashdi Team
+website: https://arashdi.com/
 Tags: qa, questions, answers, community, gamification, knowledge-base, forum, engagement, points, badges
 Requires at least: 5.0
 Tested up to: 6.8
 Requires PHP: 7.4
 Stable tag: 1.0.0
 License: GPLv2 or later
-License URI: https://www.gnu.org/licenses/gpl-2.0.html
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 A comprehensive WordPress plugin for managing Q&A functionality with advanced gamification features for community engagement and knowledge sharing.
 
