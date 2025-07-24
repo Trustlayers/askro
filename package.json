@@ -1,0 +1,44 @@
+{
+  "name": "askro",
+  "version": "1.0.0",
+  "description": "Askro WordPress Plugin - A comprehensive WordPress plugin with modern frontend tooling",
+  "main": "index.js",
+  "scripts": {
+    "clean": "if exist assets\\vendor rmdir /s /q assets\\vendor && if exist assets\\css\\style.css del assets\\css\\style.css",
+    "copy:chartjs": "powershell -Command \"New-Item -ItemType Directory -Force -Path 'assets/vendor/chartjs' | Out-Null; Copy-Item -Path 'node_modules/chart.js/dist/chart.umd.js' -Destination 'assets/vendor/chartjs/'\"",
+    "copy:swiper": "powershell -Command \"New-Item -ItemType Directory -Force -Path 'assets/vendor/swiper' | Out-Null; Copy-Item -Path 'node_modules/swiper/swiper-bundle.min.js' -Destination 'assets/vendor/swiper/'\"",
+    "copy:cropper": "powershell -Command \"New-Item -ItemType Directory -Force -Path 'assets/vendor/cropperjs' | Out-Null; Copy-Item -Path 'node_modules/cropperjs/dist/cropper.min.js' -Destination 'assets/vendor/cropperjs/'; Copy-Item -Path 'node_modules/cropperjs/dist/cropper.min.css' -Destination 'assets/vendor/cropperjs/'\"",
+    "copy:tagify": "powershell -Command \"New-Item -ItemType Directory -Force -Path 'assets/vendor/tagify' | Out-Null; Copy-Item -Path 'node_modules/@yaireo/tagify/dist/tagify.js' -Destination 'assets/vendor/tagify/'; Copy-Item -Path 'node_modules/@yaireo/tagify/dist/tagify.css' -Destination 'assets/vendor/tagify/'\"",
+    "copy:toastr": "powershell -Command \"New-Item -ItemType Directory -Force -Path 'assets/vendor/toastr' | Out-Null; Copy-Item -Path 'node_modules/toastr/build/toastr.min.js' -Destination 'assets/vendor/toastr/'; Copy-Item -Path 'node_modules/toastr/build/toastr.min.css' -Destination 'assets/vendor/toastr/'\"",
+    "copy": "npm-run-all --parallel copy:*",
+    "build:css": "tailwindcss -i ./assets/src/input.css -o ./assets/css/style.css --minify",
+    "build": "npm-run-all clean copy build:css"
+  },
+  "keywords": [
+    "wordpress",
+    "plugin",
+    "tailwindcss",
+    "chart.js",
+    "swiper"
+  ],
+  "author": "Trustlayers",
+  "license": "GPL-2.0-or-later",
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "postcss": "^8.4.0",
+    "autoprefixer": "^10.4.0",
+    "daisyui": "^4.6.0",
+    "npm-run-all": "^4.1.5"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.0",
+    "swiper": "^11.0.0",
+    "cropperjs": "^1.6.0",
+    "@yaireo/tagify": "^4.17.9",
+    "toastr": "^2.1.4"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2025-01-24
+
+### Changed
+- **Replaced archive template loader with shortcode-based archive renderer** - Migrated from direct template loading to a flexible shortcode system that provides better theme compatibility and enhanced customization options for question archives.
+
 ## [1.0.0-header-update] - 2024-12-19
 
 ### Added

@@ -1,0 +1,24 @@
+{
+    "name": "trustlayers/askro",
+    "description": "A comprehensive WordPress plugin for managing Q&A functionality with advanced features for community engagement and knowledge sharing.",
+    "type": "wordpress-plugin",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Arashdi Team",
+            "email": "arashdi@wratcliff.dev",
+            "homepage": "https://arashdi.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "Askro\\": "includes/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    }
+}

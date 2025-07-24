@@ -1,291 +1,177 @@
 <?php
 /**
- * Plugin Name: ASKRO - Ask and Answer Plugin
- * Plugin URI: https://github.com/williamalowe/askro-plugin
- * Description: A comprehensive WordPress plugin for managing Q&A functionality with advanced features for community engagement and knowledge sharing.
- * Version: 1.0.0
- * Author: William Lowe
- * Author URI: https://github.com/williamalowe
- * License: GPL v3 or later
- * License URI: https://www.gnu.org/licenses/gpl-3.0.html
- * Text Domain: askro
- * Domain Path: /languages
+ * Plugin Name:       Askro
+ * Plugin URI:        https://github.com/Trustlayers/askro.git
+ * Description:       A powerful Q&A and problem-solving community plugin with advanced gamification and voting systems.
+ * Version:           1.1.0
  * Requires at least: 5.0
- * Tested up to: 6.7
- * Requires PHP: 7.4
- * Network: false
- * 
- * @package ASKRO
- * @author William Lowe
- * @since 1.0.0
- * @license GPL-3.0-or-later
- * 
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License for more details.
- * 
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see https://www.gnu.org/licenses/gpl-3.0.html.
+ * Requires PHP:      7.4
+ * Author:            Arashdi Team
+ * Author URI:        https://arashdi.com/
+ * License:           GPL v3 or later
+ * License URI:       https://www.gnu.org/licenses/gpl-3.0.html
+ * Text Domain:       askro
+ * Domain Path:       /languages
  */
 
-// Prevent direct access
-if (!defined('ABSPATH')) {
+// Prevent direct access.
+if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
+// Define core plugin constants.
+define( 'ASKRO_VERSION', '1.1.0' );
+define( 'ASKRO_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define( 'ASKRO_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+
+// Load Composer autoloader if available.
+if ( file_exists( ASKRO_PLUGIN_DIR . 'vendor/autoload.php' ) ) {
+    require_once ASKRO_PLUGIN_DIR . 'vendor/autoload.php';
+}
+
 /**
- * Main Askro Plugin Class
- *
- * This class serves as the main entry point for the Askro plugin.
- * It handles plugin activation, deactivation, and initialization of core functionality.
- *
- * @package Askro
- * @since   1.0.0
+ * The main plugin class.
  */
-class Askro_Main
-{
-    /**
-     * Plugin version
-     *
-     * @var string
-     * @since 1.0.0
-     */
-    public const VERSION = '1.0.0';
+final class Askro_Main {
 
-    /**
-     * Minimum PHP version required
-     *
-     * @var string
-     * @since 1.0.0
-     */
-    public const MIN_PHP_VERSION = '7.4';
+    private static $instance = null;
 
-    /**
-     * Minimum WordPress version required
-     *
-     * @var string
-     * @since 1.0.0
-     */
-    public const MIN_WP_VERSION = '5.0';
-
-    /**
-     * Plugin text domain
-     *
-     * @var string
-     * @since 1.0.0
-     */
-    public const TEXT_DOMAIN = 'askro';
-
-    /**
-     * Plugin file path
-     *
-     * @var string
-     * @since 1.0.0
-     */
-    private $plugin_file;
-
-    /**
-     * Plugin directory path
-     *
-     * @var string
-     * @since 1.0.0
-     */
-    private $plugin_dir;
-
-    /**
-     * Plugin URL
-     *
-     * @var string
-     * @since 1.0.0
-     */
-    private $plugin_url;
-
-    /**
-     * Class constructor
-     *
-     * Initializes the plugin by setting up activation and deactivation hooks,
-     * and performing initial setup tasks.
-     *
-     * @since 1.0.0
-     */
-    public function __construct()
-    {
-        // Set plugin paths
-        $this->plugin_file = __FILE__;
-        $this->plugin_dir = plugin_dir_path(__FILE__);
-        $this->plugin_url = plugin_dir_url(__FILE__);
-
-        // Register activation hook
-        register_activation_hook($this->plugin_file, [self::class, 'activate']);
-
-        // Register deactivation hook
-        register_deactivation_hook($this->plugin_file, [self::class, 'deactivate']);
-
-        // Initialize plugin
-        add_action('plugins_loaded', [$this, 'init']);
+    public static function instance() {
+        if ( is_null( self::$instance ) ) {
+            self::$instance = new self();
+        }
+        return self::$instance;
     }
 
-    /**
-     * Plugin activation hook
-     *
-     * This method is called when the plugin is activated.
-     * It performs necessary setup tasks such as creating database tables,
-     * setting default options, and flushing rewrite rules.
-     *
-     * @since 1.0.0
-     * @return void
-     */
-    public static function activate(): void
-    {
-        // Check minimum PHP version
-        if (version_compare(PHP_VERSION, self::MIN_PHP_VERSION, '<')) {
-            deactivate_plugins(plugin_basename(__FILE__));
-            wp_die(
-                sprintf(
-                    /* translators: 1: Plugin name, 2: Required PHP version, 3: Current PHP version */
-                    __('%1$s requires PHP version %2$s or higher. You are running version %3$s.', self::TEXT_DOMAIN),
-                    'Askro',
-                    self::MIN_PHP_VERSION,
-                    PHP_VERSION
-                ),
-                __('Plugin Activation Error', self::TEXT_DOMAIN),
-                ['back_link' => true]
-            );
-        }
-
-        // Check minimum WordPress version
-        if (version_compare(get_bloginfo('version'), self::MIN_WP_VERSION, '<')) {
-            deactivate_plugins(plugin_basename(__FILE__));
-            wp_die(
-                sprintf(
-                    /* translators: 1: Plugin name, 2: Required WordPress version, 3: Current WordPress version */
-                    __('%1$s requires WordPress version %2$s or higher. You are running version %3$s.', self::TEXT_DOMAIN),
-                    'Askro',
-                    self::MIN_WP_VERSION,
-                    get_bloginfo('version')
-                ),
-                __('Plugin Activation Error', self::TEXT_DOMAIN),
-                ['back_link' => true]
-            );
-        }
-
-        // Set activation flag for first-time setup
-        add_option('askro_activation_time', time());
-        add_option('askro_version', self::VERSION);
-
-        // Flush rewrite rules to ensure custom post types and taxonomies work
-        flush_rewrite_rules();
-
-        // TODO: Create database tables if needed
-        // TODO: Set default plugin options
-        // TODO: Schedule cron jobs if needed
-        // TODO: Create default pages or posts if needed
+    private function __construct() {
+        $this->includes();
+        $this->init_hooks();
     }
 
+    private function includes() {
+        // Core Functionality
+        require_once ASKRO_PLUGIN_DIR . 'includes/core/class-askro-assets.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/core/class-askro-sidebars.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/core/debug-tools.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/core/class-askro-archive-fix.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/core/class-askro-css-loader.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/core/class-askro-diagnostics.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/functions/askro-question-functions.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/functions/askro-comments-functions.php';
+        
+        // Database
+        require_once ASKRO_PLUGIN_DIR . 'includes/database/class-askro-db-manager.php';
+
+        // Post Types & Taxonomies
+        require_once ASKRO_PLUGIN_DIR . 'includes/core/post-types/class-askro-question-cpt.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/core/taxonomies/class-askro-category-tax.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/core/taxonomies/class-askro-tag-tax.php';
+
+        // Admin Interface
+        require_once ASKRO_PLUGIN_DIR . 'includes/admin/class-askro-admin-menu.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/admin/tables/class-askro-vote-weights-table.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/admin/tables/class-askro-vote-reasons-table.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/admin/pages/class-askro-voting-settings-page.php';
+
+        // Frontend Features
+        require_once ASKRO_PLUGIN_DIR . 'includes/frontend/shortcodes/class-askro-submit-form-shortcode.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/frontend/shortcodes/class-askro-user-profile-shortcode.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/frontend/shortcodes/class-askro-archive-shortcode.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/frontend/ajax/class-askro-archive-handler.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/frontend/ajax/class-askro-voting-handler.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/frontend/ajax/class-askro-answer-handler.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/frontend/ajax/class-askro-comment-handler.php';
+        require_once ASKRO_PLUGIN_DIR . 'includes/frontend/ajax/class-askro-profile-handler.php';
+    }
+
+    private function init_hooks() {
+        // Register activation and deactivation hooks
+        register_activation_hook( __FILE__, array( $this, 'activate' ) );
+        register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
+        add_action( 'plugins_loaded', array( $this, 'on_plugins_loaded' ) );
+        
+        // Initialize post types and taxonomies here, as they hook into 'init'.
+        Askro_Question_CPT::init();
+        Askro_Category_Tax::init();
+        Askro_Tag_Tax::init();
+        
+        // Check if we need to flush rewrite rules based on plugin version changes
+        add_action( 'init', array( $this, 'maybe_flush_rewrite_rules' ), 99 );
+    }
+    
+    /**
+     * Check if we need to flush rewrite rules
+     * 
+     * This is an additional safeguard to ensure rewrite rules are up to date.
+     * It runs on a version change or new installation.
+     */
+    public function maybe_flush_rewrite_rules() {
+        $version = get_option( 'askro_version', '0' );
+        
+        // If version has changed or new installation
+        if ( $version !== ASKRO_VERSION ) {
+            // Store current version
+            update_option( 'askro_version', ASKRO_VERSION );
+            
+            // Flag that we need to flush
+            update_option( 'askro_flush_rewrite_rules', 'yes' );
+        }
+        
+        // Check if we need to flush
+        if ( 'yes' === get_option( 'askro_flush_rewrite_rules', 'no' ) ) {
+            // Clear the flag first to prevent infinite loop
+            update_option( 'askro_flush_rewrite_rules', 'no' );
+            
+            // Flush the rules
+            flush_rewrite_rules();
+        }
+    }
+    
     /**
      * Plugin deactivation hook
-     *
-     * This method is called when the plugin is deactivated.
-     * It performs cleanup tasks such as clearing scheduled events
-     * and flushing rewrite rules.
-     *
-     * @since 1.0.0
-     * @return void
      */
-    public static function deactivate(): void
-    {
-        // Clear scheduled events
-        wp_clear_scheduled_hook('askro_daily_cleanup');
-        wp_clear_scheduled_hook('askro_weekly_maintenance');
-
-        // Flush rewrite rules to clean up custom post types and taxonomies
+    public function deactivate() {
+        // Flush rewrite rules on deactivation
         flush_rewrite_rules();
-
-        // TODO: Perform additional cleanup tasks
-        // TODO: Clear transients
-        // TODO: Remove temporary files
-        // Note: Do not remove user data or settings on deactivation
-        // Only remove data on uninstall if explicitly requested
     }
 
-    /**
-     * Initialize the plugin
-     *
-     * This method is called on the 'plugins_loaded' hook to ensure
-     * WordPress is fully loaded before initializing plugin functionality.
-     *
-     * @since 1.0.0
-     * @return void
-     */
-    public function init(): void
-    {
-        // Load text domain for internationalization
-        load_plugin_textdomain(
-            self::TEXT_DOMAIN,
-            false,
-            dirname(plugin_basename(__FILE__)) . '/languages'
-        );
+    public function activate() {
+        // During activation, we need to register post types directly
+        // since the 'init' action won't fire during activation
+        Askro_Question_CPT::register_post_type();
+        Askro_Category_Tax::register_taxonomy();
+        Askro_Tag_Tax::register_taxonomy();
 
-        // TODO: Initialize core plugin components
-        // TODO: Load required files
-        // TODO: Initialize admin interface
-        // TODO: Initialize frontend functionality
-        // TODO: Register custom post types and taxonomies
-        // TODO: Enqueue scripts and styles
-        // TODO: Set up AJAX handlers
-        // TODO: Initialize REST API endpoints
+        // Create custom database tables.
+        Askro_Database_Manager::create_tables();
+
+        // Flush rewrite rules to recognize the new CPTs.
+        flush_rewrite_rules();
     }
 
-    /**
-     * Get plugin version
-     *
-     * @since 1.0.0
-     * @return string Plugin version
-     */
-    public function get_version(): string
-    {
-        return self::VERSION;
-    }
-
-    /**
-     * Get plugin file path
-     *
-     * @since 1.0.0
-     * @return string Plugin file path
-     */
-    public function get_plugin_file(): string
-    {
-        return $this->plugin_file;
-    }
-
-    /**
-     * Get plugin directory path
-     *
-     * @since 1.0.0
-     * @return string Plugin directory path
-     */
-    public function get_plugin_dir(): string
-    {
-        return $this->plugin_dir;
-    }
-
-    /**
-     * Get plugin URL
-     *
-     * @since 1.0.0
-     * @return string Plugin URL
-     */
-    public function get_plugin_url(): string
-    {
-        return $this->plugin_url;
+    public function on_plugins_loaded() {
+        // Initialize all components.
+        Askro_Assets::init();
+        Askro_CSS_Loader::init();
+        Askro_Sidebars::init();
+        Askro_Archive_Fix::init();
+        Askro_Diagnostics::init();
+        Askro_Admin_Menu::init();
+        Askro_Submit_Form_Shortcode::init();
+        Askro_User_Profile_Shortcode::init();
+        Askro_Archive_Shortcode::init();
+        Askro_Archive_Handler::init();
+        Askro_Voting_Handler::init();
+        Askro_Answer_Handler::init();
+        Askro_Comment_Handler::init();
+        Askro_Profile_Handler::init();
     }
 }
 
-// Instantiate the main plugin class to initialize the plugin
-new Askro_Main();
+/**
+ * Begins execution of the plugin.
+ */
+function askro_run() {
+    return Askro_Main::instance();
+}
+askro_run();
